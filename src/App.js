@@ -7,8 +7,8 @@ class App extends React.Component {
     super()
     this.state = {
       deck: [
-        `AC`,`6D`,`3H`,`2S`,
-        `8C`,`5D`,`6H`,`2S`,
+        `AC`,`AD`,`AH`,`AS`,
+        `2C`,`2D`,`2H`,`2S`,
         `3C`,`3D`,`3H`,`3S`,
         `4C`,`4D`,`4H`,`4S`,
         `5C`,`5D`,`5H`,`5S`,
@@ -59,8 +59,8 @@ class App extends React.Component {
     this.setState(() => {
       return{
         deck: [
-          `AC`,`8C`,`3C`,`4C`,
-          `9C`,`6C`,`7C`,`2S`,
+          `AC`,`AD`,`AH`,`AS`,
+          `2C`,`2D`,`2H`,`2S`,
           `3C`,`3D`,`3H`,`3S`,
           `4C`,`4D`,`4H`,`4S`,
           `5C`,`5D`,`5H`,`5S`,
@@ -306,15 +306,17 @@ class App extends React.Component {
   }
   // Returns an array of the second highest ranking paired Set
   secondHighestSetOf(tempAlterableHand){
-    let highestSet = this.highestPairedSetOf(tempAlterableHand)
+    let highestSet = []
+    let secondHighestSet = []
+    highestSet.push(...this.highestPairedSetOf(tempAlterableHand))
     let restOfHand = []
-    restOfHand.push(...tempAlterableHand)
-    for(let i = 0; i < restOfHand.length; i++){
-      if(highestSet.includes(restOfHand[i])){
-        restOfHand.splice(restOfHand.indexOf(restOfHand[i]))
+    for(let i = 0; i < tempAlterableHand.length; i++){
+      if(!  highestSet.includes(tempAlterableHand[i])){
+        restOfHand.push(tempAlterableHand[i])
       }
     }
-    return this.highestPairedSetOf(restOfHand)
+    secondHighestSet.push(...this.highestPairedSetOf(restOfHand))
+    return secondHighestSet
   }
   // Evaluates hand rankings and returns the best five card hand
   evaluateHand(){
@@ -329,6 +331,14 @@ class App extends React.Component {
         let flushedHand = this.checkForFlush(tempAlterableHand)
         if(this.checkForStraight(flushedHand) !== false){
           straightFlushedHand = this.checkForStraight(flushedHand)
+          if(straightFlushedHand[straightFlushedHand.length - 1][0] === `A`){
+            tempRank = `Royal Flush`
+            return{
+              finalPlayerHand: straightFlushedHand,
+              playerHandRank: this.state.handRanks[9],
+              handMessage: tempRank
+            }
+          }
           tempRank = `${straightFlushedHand[straightFlushedHand.length - 1][0]} high Straight ${flushedHand[0][1]} Flush`
           return{
             finalPlayerHand: straightFlushedHand,
@@ -339,7 +349,8 @@ class App extends React.Component {
       }
       // Checks for four of a kind
       if(this.highestPairedSetOf(tempAlterableHand).length === 4){
-        let fourOfAKindHand = this.highestPairedSetOf(tempAlterableHand)
+        let fourOfAKindHand = []
+        fourOfAKindHand.push(...this.highestPairedSetOf(tempAlterableHand))
         for(let i = tempAlterableHand.length - 1; i >= 0; i--){
           if(fourOfAKindHand.includes(tempAlterableHand[i]) === false){
             fourOfAKindHand.push(tempAlterableHand[i])
@@ -352,18 +363,18 @@ class App extends React.Component {
           }
         }
       }
-
       // Checks for a full house
       if(this.highestPairedSetOf(tempAlterableHand).length === 3){
-        let fullHouseHand = this.highestPairedSetOf(tempAlterableHand)
-        let insidePair = this.secondHighestSetOf(tempAlterableHand)
+        let fullHouseHand = []
+        fullHouseHand.push(...this.highestPairedSetOf(tempAlterableHand))
+        let insidePair = []
+        insidePair.push(...this.secondHighestSetOf(tempAlterableHand))
         while(insidePair.length > 2){
           insidePair.shift()
         }
         if(insidePair.length === 2){
           fullHouseHand.push(...insidePair)
           tempRank = `Full House ${fullHouseHand[0][0]}s full of ${fullHouseHand[fullHouseHand.length - 1][0]}s`
-          console.log(tempRank)
           return{
             finalPlayerHand: fullHouseHand,
             playerHandRank: this.state.handRanks[6],
@@ -393,7 +404,8 @@ class App extends React.Component {
       }
       // Checks for three of a kind
       if(this.highestPairedSetOf(tempAlterableHand).length === 3){
-        let tripsHand = this.highestPairedSetOf(tempAlterableHand)
+        let tripsHand = []
+        tripsHand.push(...this.highestPairedSetOf(tempAlterableHand))
         for(let i = tempAlterableHand.length - 1; tripsHand.length < 5; i--){
           if(tripsHand.includes(tempAlterableHand[i]) === false){
             tripsHand.push(tempAlterableHand[i])
@@ -436,6 +448,7 @@ class App extends React.Component {
             }
             tempRank = `Pair of ${onePairHand[0][0]}s ${onePairHand[onePairHand.length - 3][0]} ${onePairHand[onePairHand.length - 2][0]} ${onePairHand[onePairHand.length - 1][0]} high`
           }
+          // If none of the above return, returns current hand with High Card rank
           return{
             finalPlayerHand: onePairHand,
             playerHandRank: this.state.handRanks[1],
@@ -454,7 +467,7 @@ class App extends React.Component {
         }else{
           highCardHand.push(...tempAlterableHand)
         }
-        tempRank = `High card of ${highCardHand[highCardHand.length - 1][0]}`
+        tempRank = `High card of ${highCardHand[0][0]}, ${highCardHand[1][0]}`
         return{
           finalPlayerHand: highCardHand,
           playerHandRank: this.state.handRanks[0],
@@ -462,9 +475,7 @@ class App extends React.Component {
         }
       }
     })
-      
   }
-  
   render(){
     const newBoard = this.state.board.map((card, i) => {
       return(
@@ -478,7 +489,6 @@ class App extends React.Component {
     })
     return(
       <div>
-        {this.state.deck}
         <div>
           {newHand}
         </div>
@@ -492,6 +502,9 @@ class App extends React.Component {
           <button onClick = {() => this.evaluateHand()}>Evaluate Hand</button>
         <div>
           {newBoard}
+        </div>
+        <div>
+          {this.state.handMessage}
         </div>
       </div>
     )
